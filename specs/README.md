@@ -21,6 +21,8 @@ behavior.
 | [Events and rich paper search](features/events-and-rich-paper-search.md) | Implemented | Public events list and richer public paper search endpoints |
 | [Public read expansion](features/public-read-expansion.md) | Proposed | Future confirmed public read endpoints |
 | [Authenticated expansion backlog](features/authenticated-expansion-backlog.md) | Backlog | Future authenticated assistant usage, context-window, people, organization, and profile surfaces |
+| [Public people, organization, and profile backlog](features/public-people-org-profile-backlog.md) | Backlog | Deferred public people, user profile, profile connection, and organization detail APIs |
+| [Authenticated assistant usage and context backlog](features/authenticated-assistant-usage-context-backlog.md) | Backlog | Deferred authenticated assistant usage, usage-history, activity, and context-window APIs |
 
 ## Required Feature Spec Sections
 
