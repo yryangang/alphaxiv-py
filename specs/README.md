@@ -15,6 +15,7 @@ behavior.
 | [Paper reads and resources](features/paper-reads-and-resources.md) | Implemented | Public paper metadata, text, overview, comments, resources, and related assets |
 | [Authenticated assistant](features/authenticated-assistant.md) | Implemented | Authenticated assistant sessions, messages, chat, model preference, and URL metadata |
 | [Auth, folders, and social actions](features/auth-folders-social-actions.md) | Implemented | Auth setup, current user, folders, votes, comments, and preferences |
+| [CLI guides and agent integrations](features/cli-guides-and-agent-integrations.md) | Implemented | Workflow guides, packaged skills, and Codex, Claude Code, and OpenCode integration installs |
 | [Public read expansion](features/public-read-expansion.md) | Proposed | Future confirmed public read endpoints |
 | [Authenticated expansion backlog](features/authenticated-expansion-backlog.md) | Backlog | Future authenticated assistant usage, context-window, people, organization, and profile surfaces |
 
@@ -38,4 +39,3 @@ Focused checker tests:
 ```bash
 uv run pytest tests/unit/test_check_specs.py -q
 ```
-

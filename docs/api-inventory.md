@@ -73,6 +73,8 @@ These common documentation paths were probed on `https://api.alphaxiv.org` and r
 | `GET` | `/users/v3` | auth | Current user profile and preferences. | yes |
 | `PATCH` | `/users/v3/preferences` | auth write | Updates user preferences such as preferred assistant model. | yes |
 | `GET` | `/folders/v3` | auth | Returns user folders or bookmark containers. | yes |
+| `POST` | `/folders/v3/{folderId}/add-papers` | auth write | Adds one or more paper group ids to a folder. | yes |
+| `POST` | `/folders/v3/{folderId}/remove-papers` | auth write | Removes one or more paper group ids from a folder. | yes |
 
 ### Voting and Social Actions
 
@@ -102,7 +104,7 @@ These are the endpoint groups currently wired into the SDK and CLI:
 - Feed support: `/organizations/v2/top`, `/papers/v3/feed`
 - Papers: `/papers/v3/legacy/{id}`, `/papers/v3/legacy/{paperGroupId}/comments`, `/papers/v2/{paperVersionId}/comment`, `/papers/v3/{paperVersionId}/full-text`, `/papers/v3/{paperVersionId}/overview/{lang}`, `/papers/v3/{paperVersionId}/overview/status`, `/papers/v3/x-mentions-db/{paperGroupId}`, `/papers/v3/{paperGroupId}/view`, `/papers/v3/{paperId}/similar-papers`, `/v2/papers/{paperId}/vote`
 - Assistant: `/assistant/v2?variant=homepage`, `/assistant/v2?variant=paper&paperVersion=...`, `/assistant/v2/{sessionId}/messages`, `/assistant/v2/chat`, `/assistant/v2/url-metadata`
-- Auth and preferences: `/users/v3`, `/users/v3/preferences`, `/folders/v3`, `/comments/v2/{commentId}/upvote`, `/comments/v2/{commentId}`
+- Auth and preferences: `/users/v3`, `/users/v3/preferences`, `/folders/v3`, `/folders/v3/{folderId}/add-papers`, `/folders/v3/{folderId}/remove-papers`, `/comments/v2/{commentId}/upvote`, `/comments/v2/{commentId}`
 - Related hosts: `fetcher.alphaxiv.org` PDF URLs and `paper-podcasts.alphaxiv.org` transcript or podcast assets
 
 ## Notes
