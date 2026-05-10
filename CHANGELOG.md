@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## 0.5.0 - 2026-05-10
+
+- Added a repo-local spec system under `specs/` with `scripts/check_specs.py`
+  validation for endpoint evidence, acceptance criteria, and release-facing
+  feature contracts.
+- Added public discovery expansion with rich paper search through
+  `client.search.papers_rich(...)`, `alphaxiv search papers --rich`, and the
+  new `client.events.list()` / `alphaxiv events list` event surface.
+- Added expanded paper read sidecars for preview cards, figure URLs,
+  AI-detection results, and model-link matches through both SDK methods and
+  `alphaxiv paper` CLI commands.
+- Documented the expanded public read surfaces across the API inventory, CLI
+  reference, Python API guide, development docs, and live public smoke coverage.
+- Updated development dependency locks for the latest pytest and Pygments patch
+  releases.
+
 ## 0.4.2 - 2026-04-02
 
 - Documented that long-running assistant chat sessions can slow down over time
