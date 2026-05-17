@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+
 from .exceptions import APIError, AuthRequiredError
 from ._comments import CommentsAPI
 from ._core import DEFAULT_TIMEOUT, ClientCore
@@ -111,18 +113,24 @@ class AlphaXivClient:
         *,
         language: str = "en",
         wait_timeout: float = 300.0,
+        on_missing: Callable[[], None] | None = None,
     ) -> PaperOverview:
         """Return the paper overview, or request generation when missing.
 
         Notes:
         - The overview endpoint is public, but generation requires authentication.
         - This mirrors the web UI's "Generate Overview" flow and does NOT call Playwright.
+        - ``on_missing`` is invoked when the overview endpoint returns 404, before any
+          authentication check or generation request.
         """
         try:
             return await self.papers.overview(identifier, language=language)
         except APIError as exc:
             if exc.status_code != 404:
                 raise
+
+        if on_missing is not None:
+            on_missing()
 
         if not self._core.authorization:
             raise AuthRequiredError(

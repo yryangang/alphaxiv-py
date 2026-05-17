@@ -110,6 +110,12 @@ def fetch_paper(identifier: str) -> Paper:
     return run_async_with_click_errors(_get(), see_help="alphaxiv paper --help")
 
 
+def notify_overview_missing_for_generate(identifier: str, language: str) -> None:
+    """Print notices when generate mode finds no overview yet."""
+    click.echo(f"No overview found for {identifier} (language: {language}).", err=True)
+    click.echo("Requesting overview generation...", err=True)
+
+
 def fetch_overview(identifier: str, language: str = "en") -> PaperOverview:
     async def _get() -> PaperOverview:
         async with make_client() as client:
@@ -672,10 +678,7 @@ def show_summary(paper_id: str | None, language: str, raw: bool, json_output: bo
     "generate_if_missing",
     default=True,
     show_default=True,
-    help=(
-        "When enabled (default), if the overview does not exist yet, request generation through the "
-        "web-backed API and wait for it to become available."
-    ),
+    help="Request and wait for overview generation when missing.",
 )
 @click.option("--json", "json_output", is_flag=True, help="Print normalized machine-readable JSON.")
 def paper_overview(
@@ -700,10 +703,18 @@ def paper_overview(
             ),
             see_help="alphaxiv paper overview --help",
         )
+    show_notices = not machine and not json_output
     if generate_if_missing:
+        def _on_missing() -> None:
+            notify_overview_missing_for_generate(identifier, language)
+
         async def _get():
             async with make_authenticated_client() as client:
-                return await client.get_or_generate_overview(identifier, language=language)
+                return await client.get_or_generate_overview(
+                    identifier,
+                    language=language,
+                    on_missing=_on_missing if show_notices else None,
+                )
 
         overview_obj = run_async_with_click_errors(
             _get(),
