@@ -606,6 +606,32 @@ async def test_wait_for_overview_normalizes_language(httpx_mock) -> None:
 
 
 @pytest.mark.asyncio
+async def test_wait_for_overview_errors_when_base_status_failed(httpx_mock) -> None:
+    status_payload = cast(dict[str, Any], deepcopy(OVERVIEW_STATUS_PAYLOAD))
+    status_payload["state"] = "failed"
+    status_payload["error"] = "Generation failed"
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.alphaxiv.org/papers/v3/legacy/2603.04379v1",
+        json=LEGACY_PAYLOAD,
+    )
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.alphaxiv.org/papers/v3/019cbc05-f158-7e3a-b9c1-a43274c0130b/overview/status",
+        json=status_payload,
+    )
+
+    async with AlphaXivClient() as client:
+        with pytest.raises(APIError, match="Overview generation failed") as exc:
+            await client.papers.wait_for_overview(
+                "2603.04379v1",
+                timeout=300,
+            )
+
+    assert exc.value.status_code == 502
+
+
+@pytest.mark.asyncio
 async def test_wait_for_overview_errors_when_translation_status_missing(httpx_mock) -> None:
     status_payload = cast(dict[str, Any], deepcopy(OVERVIEW_STATUS_PAYLOAD))
     translations = cast(dict[str, Any], status_payload["translations"])
@@ -630,6 +656,35 @@ async def test_wait_for_overview_errors_when_translation_status_missing(httpx_mo
             )
 
     assert exc.value.status_code == 404
+
+
+@pytest.mark.asyncio
+async def test_wait_for_overview_errors_when_translation_status_failed(httpx_mock) -> None:
+    status_payload = cast(dict[str, Any], deepcopy(OVERVIEW_STATUS_PAYLOAD))
+    translations = cast(dict[str, Any], status_payload["translations"])
+    fr_translation = cast(dict[str, Any], translations["fr"])
+    fr_translation["state"] = "failed"
+    fr_translation["error"] = None
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.alphaxiv.org/papers/v3/legacy/2603.04379v1",
+        json=LEGACY_PAYLOAD,
+    )
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.alphaxiv.org/papers/v3/019cbc05-f158-7e3a-b9c1-a43274c0130b/overview/status",
+        json=status_payload,
+    )
+
+    async with AlphaXivClient() as client:
+        with pytest.raises(APIError, match="Overview translation failed") as exc:
+            await client.papers.wait_for_overview(
+                "2603.04379v1",
+                language="fr",
+                timeout=300,
+            )
+
+    assert exc.value.status_code == 502
 
 
 @pytest.mark.asyncio

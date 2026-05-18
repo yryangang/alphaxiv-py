@@ -203,6 +203,7 @@ class PapersAPI:
         last_state: str | None = None
         last_url: str | None = None
         pending_states = {"pending", "queued", "running", "processing", "extracting", "generating"}
+        success_states = {"done", "complete", "completed", "ready", "success", "succeeded"}
         while True:
             try:
                 last_status = await self.overview_status(identifier)
@@ -217,6 +218,12 @@ class PapersAPI:
                 last_url = f"{BASE_API_URL}/papers/v3/{last_status.version_id}/overview/status"
                 last_state = (last_status.state or "").strip().lower() or None
                 if last_state and last_state not in pending_states:
+                    if last_state not in success_states:
+                        error = last_status.raw.get("error")
+                        message = f"Overview generation failed with state '{last_state}'."
+                        if error:
+                            message = f"{message} Error: {error}"
+                        raise APIError(message, status_code=502, url=last_url)
                     if language == "en":
                         return last_status
                     translation = last_status.translations.get(language)
@@ -230,6 +237,14 @@ class PapersAPI:
                     else:
                         translation_state = (translation.state or "").strip().lower() or None
                         if translation_state and translation_state not in pending_states:
+                            if translation_state not in success_states:
+                                message = (
+                                    f"Overview translation failed with state "
+                                    f"'{translation_state}'."
+                                )
+                                if translation.error:
+                                    message = f"{message} Error: {translation.error}"
+                                raise APIError(message, status_code=502, url=last_url)
                             if translation.error:
                                 raise APIError(
                                     f"Overview translation failed: {translation.error}",
