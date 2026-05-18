@@ -167,9 +167,7 @@ class PapersAPI:
             try:
                 version_num = int(version_str)
             except ValueError as exc:
-                raise ResolutionError(
-                    f"Invalid arXiv version suffix in '{identifier}'."
-                ) from exc
+                raise ResolutionError(f"Invalid arXiv version suffix in '{identifier}'.") from exc
 
         response = await self._core.request(
             "POST",
@@ -245,8 +243,7 @@ class PapersAPI:
                         if translation_state and translation_state not in pending_states:
                             if translation_state not in success_states:
                                 message = (
-                                    f"Overview translation failed with state "
-                                    f"'{translation_state}'."
+                                    f"Overview translation failed with state '{translation_state}'."
                                 )
                                 if translation.error:
                                     message = f"{message} Error: {translation.error}"

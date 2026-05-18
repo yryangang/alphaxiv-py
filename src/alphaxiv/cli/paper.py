@@ -705,6 +705,7 @@ def paper_overview(
         )
     show_notices = not machine and not json_output
     if generate_if_missing:
+
         def _on_missing() -> None:
             notify_overview_missing_for_generate(identifier, language)
 
