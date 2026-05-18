@@ -606,6 +606,32 @@ async def test_wait_for_overview_normalizes_language(httpx_mock) -> None:
 
 
 @pytest.mark.asyncio
+async def test_wait_for_overview_preserves_repeated_status_404(httpx_mock) -> None:
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.alphaxiv.org/papers/v3/legacy/2603.04379v1",
+        json=LEGACY_PAYLOAD,
+    )
+    for _ in range(3):
+        httpx_mock.add_response(
+            method="GET",
+            url="https://api.alphaxiv.org/papers/v3/019cbc05-f158-7e3a-b9c1-a43274c0130b/overview/status",
+            status_code=404,
+            json={"error": {"message": "Overview status not found"}},
+        )
+
+    async with AlphaXivClient() as client:
+        with pytest.raises(APIError) as exc:
+            await client.papers.wait_for_overview(
+                "2603.04379v1",
+                timeout=300,
+                poll_interval=0,
+            )
+
+    assert exc.value.status_code == 404
+
+
+@pytest.mark.asyncio
 async def test_wait_for_overview_errors_when_base_status_failed(httpx_mock) -> None:
     status_payload = cast(dict[str, Any], deepcopy(OVERVIEW_STATUS_PAYLOAD))
     status_payload["state"] = "failed"
