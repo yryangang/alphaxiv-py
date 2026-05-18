@@ -478,6 +478,73 @@ async def test_overview_and_resources(httpx_mock) -> None:
 
 
 @pytest.mark.asyncio
+async def test_overview_normalizes_language(httpx_mock) -> None:
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.alphaxiv.org/papers/v3/legacy/2603.04379v1",
+        json=LEGACY_PAYLOAD,
+    )
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.alphaxiv.org/papers/v3/019cbc05-f158-7e3a-b9c1-a43274c0130b/overview/en",
+        json=OVERVIEW_PAYLOAD,
+    )
+
+    async with AlphaXivClient() as client:
+        overview = await client.papers.overview("2603.04379v1", language="EN")
+
+    assert overview.language == "en"
+    assert overview.summary is not None
+
+
+@pytest.mark.asyncio
+async def test_request_overview_ai_resolves_version_uuid(httpx_mock) -> None:
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.alphaxiv.org/papers/v3/019cbc05-f158-7e3a-b9c1-a43274c0130b",
+        json=DIRECT_PAPER_PAYLOAD,
+    )
+    httpx_mock.add_response(
+        method="POST",
+        url="https://api.alphaxiv.org/v2/papers/2603.04379/versions/1/request-ai?preferredLanguage=en",
+        match_headers={"Authorization": "Bearer axv1_test-token"},
+        match_json={},
+        json={"status": "queued"},
+    )
+
+    async with AlphaXivClient(api_key="axv1_test-token") as client:
+        payload = await client.papers.request_overview_ai(
+            "019cbc05-f158-7e3a-b9c1-a43274c0130b",
+            preferred_language="EN",
+        )
+
+    assert payload == {"status": "queued"}
+
+
+@pytest.mark.asyncio
+async def test_wait_for_overview_normalizes_language(httpx_mock) -> None:
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.alphaxiv.org/papers/v3/legacy/2603.04379v1",
+        json=LEGACY_PAYLOAD,
+    )
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.alphaxiv.org/papers/v3/019cbc05-f158-7e3a-b9c1-a43274c0130b/overview/status",
+        json=OVERVIEW_STATUS_PAYLOAD,
+    )
+
+    async with AlphaXivClient() as client:
+        status = await client.papers.wait_for_overview(
+            "2603.04379v1",
+            language="EN",
+            timeout=0,
+        )
+
+    assert status.state == "done"
+
+
+@pytest.mark.asyncio
 async def test_paper_comments(httpx_mock) -> None:
     comments_legacy_payload = cast(dict[str, Any], deepcopy(LEGACY_PAYLOAD))
     paper_payload = cast(dict[str, Any], comments_legacy_payload["paper"])

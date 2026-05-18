@@ -38,6 +38,10 @@ PODCASTS_BASE_URL = "https://paper-podcasts.alphaxiv.org"
 _ARXIV_VERSION_RE = re.compile(r"^(?P<bare>\d{4}\.\d{4,5})(?:v(?P<version>\d+))?$")
 
 
+def _normalize_overview_language(language: str) -> str:
+    return language.strip().lower() or "en"
+
+
 class PapersAPI:
     """Paper-related alphaXiv operations."""
 
@@ -91,6 +95,7 @@ class PapersAPI:
         return Paper.from_payload(resolved, payload)
 
     async def overview(self, identifier: str, language: str = "en") -> PaperOverview:
+        language = _normalize_overview_language(language)
         resolved = await self.resolve(identifier)
         if not resolved.version_id:
             raise ResolutionError(f"Could not determine a paper version UUID for '{identifier}'.")
@@ -129,10 +134,15 @@ class PapersAPI:
         if not self._core.authorization:
             raise AuthRequiredError("Overview generation requires authentication.")
 
+        preferred_language = _normalize_overview_language(preferred_language)
         normalized = normalize_identifier(identifier)
         match = _ARXIV_VERSION_RE.fullmatch(normalized)
         if not match:
-            resolved = await self.resolve(identifier)
+            if is_paper_version_uuid(normalized):
+                resolved = await self._resolve_direct(identifier, normalized)
+                self._cache_resolution(normalized, resolved)
+            else:
+                resolved = await self.resolve(identifier)
             normalized = resolved.canonical_id or resolved.versionless_id or normalized
             match = _ARXIV_VERSION_RE.fullmatch(normalized)
 
@@ -186,6 +196,7 @@ class PapersAPI:
         If ``language`` is not the default, waits for the corresponding translation status to
         reach a terminal state as well.
         """
+        language = _normalize_overview_language(language)
         loop = asyncio.get_running_loop()
         deadline = loop.time() + timeout
         last_status: OverviewStatus | None = None
