@@ -545,6 +545,33 @@ async def test_wait_for_overview_normalizes_language(httpx_mock) -> None:
 
 
 @pytest.mark.asyncio
+async def test_wait_for_overview_errors_when_translation_status_missing(httpx_mock) -> None:
+    status_payload = cast(dict[str, Any], deepcopy(OVERVIEW_STATUS_PAYLOAD))
+    translations = cast(dict[str, Any], status_payload["translations"])
+    status_payload["translations"] = {"en": translations["en"]}
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.alphaxiv.org/papers/v3/legacy/2603.04379v1",
+        json=LEGACY_PAYLOAD,
+    )
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.alphaxiv.org/papers/v3/019cbc05-f158-7e3a-b9c1-a43274c0130b/overview/status",
+        json=status_payload,
+    )
+
+    async with AlphaXivClient() as client:
+        with pytest.raises(APIError, match="Overview translation for 'fr' was not queued") as exc:
+            await client.papers.wait_for_overview(
+                "2603.04379v1",
+                language="fr",
+                timeout=300,
+            )
+
+    assert exc.value.status_code == 404
+
+
+@pytest.mark.asyncio
 async def test_paper_comments(httpx_mock) -> None:
     comments_legacy_payload = cast(dict[str, Any], deepcopy(LEGACY_PAYLOAD))
     paper_payload = cast(dict[str, Any], comments_legacy_payload["paper"])

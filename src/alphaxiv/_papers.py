@@ -221,9 +221,12 @@ class PapersAPI:
                         return last_status
                     translation = last_status.translations.get(language)
                     if translation is None:
-                        # The base overview can be complete while the translation record is still
-                        # being created/queued.
-                        pass
+                        raise APIError(
+                            f"Overview translation for '{language}' was not queued after base "
+                            f"overview reached {last_state}.",
+                            status_code=404,
+                            url=last_url,
+                        )
                     else:
                         translation_state = (translation.state or "").strip().lower() or None
                         if translation_state and translation_state not in pending_states:
