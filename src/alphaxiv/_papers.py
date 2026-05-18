@@ -157,12 +157,12 @@ class PapersAPI:
         if version_str is None:
             legacy = await self._get_legacy_payload(bare)
             paper = legacy.get("paper")
-            if not (isinstance(paper, dict) and isinstance(paper.get("max_version_order"), int)):
+            version_num = self._version_number_from_legacy_paper(paper)
+            if version_num is None:
                 raise ResolutionError(
                     f"Could not determine the latest arXiv version for '{identifier}'. "
                     "Try passing an explicit version like 2604.02368v4."
                 )
-            version_num = int(paper["max_version_order"])
         else:
             try:
                 version_num = int(version_str)
@@ -550,6 +550,35 @@ class PapersAPI:
         if not canonical_id or "v" not in canonical_id:
             return None
         return f"v{canonical_id.rsplit('v', 1)[1]}"
+
+    def _version_number_from_legacy_paper(self, paper: Any) -> int | None:
+        if not isinstance(paper, dict):
+            return None
+
+        max_version_order = self._positive_int(paper.get("max_version_order"))
+        if max_version_order is not None:
+            return max_version_order
+
+        version = paper.get("paper_version") or {}
+        if not isinstance(version, dict):
+            return None
+
+        version_order = self._positive_int(version.get("version_order"))
+        if version_order is not None:
+            return version_order
+
+        version_label = version.get("version_label")
+        if not isinstance(version_label, str):
+            return None
+        match = re.fullmatch(r"v(?P<version>\d+)", version_label.strip())
+        if not match:
+            return None
+        return int(match.group("version"))
+
+    def _positive_int(self, value: Any) -> int | None:
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            return None
+        return value
 
     def _resolved_from_legacy(self, input_id: str, payload: dict[str, Any]) -> ResolvedPaper:
         paper = payload.get("paper") or {}

@@ -522,6 +522,37 @@ async def test_request_overview_ai_resolves_version_uuid(httpx_mock) -> None:
 
 
 @pytest.mark.asyncio
+async def test_request_overview_ai_uses_legacy_version_label_when_max_missing(
+    httpx_mock,
+) -> None:
+    legacy_payload = cast(dict[str, Any], deepcopy(LEGACY_PAYLOAD))
+    paper = cast(dict[str, Any], legacy_payload["paper"])
+    paper.pop("max_version_order", None)
+    paper_version = cast(dict[str, Any], paper["paper_version"])
+    paper_version.pop("version_order", None)
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.alphaxiv.org/papers/v3/legacy/2603.04379",
+        json=legacy_payload,
+    )
+    httpx_mock.add_response(
+        method="POST",
+        url="https://api.alphaxiv.org/v2/papers/2603.04379/versions/1/request-ai?preferredLanguage=en",
+        match_headers={"Authorization": "Bearer axv1_test-token"},
+        match_json={},
+        json={"status": "queued"},
+    )
+
+    async with AlphaXivClient(api_key="axv1_test-token") as client:
+        payload = await client.papers.request_overview_ai(
+            "2603.04379",
+            preferred_language="EN",
+        )
+
+    assert payload == {"status": "queued"}
+
+
+@pytest.mark.asyncio
 async def test_wait_for_overview_normalizes_language(httpx_mock) -> None:
     httpx_mock.add_response(
         method="GET",
