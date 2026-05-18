@@ -155,7 +155,7 @@ class PapersAPI:
         bare = match.group("bare")
         version_str = match.group("version")
         if version_str is None:
-            legacy = await self._get_legacy_payload(bare)
+            legacy = await self._get_legacy_or_direct_payload(identifier, bare)
             paper = legacy.get("paper")
             version_num = self._version_number_from_legacy_paper(paper)
             if version_num is None:

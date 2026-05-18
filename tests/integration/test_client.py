@@ -553,6 +553,36 @@ async def test_request_overview_ai_uses_legacy_version_label_when_max_missing(
 
 
 @pytest.mark.asyncio
+async def test_request_overview_ai_bare_id_falls_back_to_direct_paper(httpx_mock) -> None:
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.alphaxiv.org/papers/v3/legacy/2603.04379",
+        status_code=404,
+        json={"error": {"message": "Paper not found"}},
+    )
+    httpx_mock.add_response(
+        method="GET",
+        url="https://api.alphaxiv.org/papers/v3/2603.04379",
+        json=DIRECT_PAPER_PAYLOAD,
+    )
+    httpx_mock.add_response(
+        method="POST",
+        url="https://api.alphaxiv.org/v2/papers/2603.04379/versions/1/request-ai?preferredLanguage=en",
+        match_headers={"Authorization": "Bearer axv1_test-token"},
+        match_json={},
+        json={"status": "queued"},
+    )
+
+    async with AlphaXivClient(api_key="axv1_test-token") as client:
+        payload = await client.papers.request_overview_ai(
+            "2603.04379",
+            preferred_language="EN",
+        )
+
+    assert payload == {"status": "queued"}
+
+
+@pytest.mark.asyncio
 async def test_wait_for_overview_normalizes_language(httpx_mock) -> None:
     httpx_mock.add_response(
         method="GET",
